@@ -1,22 +1,26 @@
 from sqlalchemy.orm import Session
 
 from app.models.user import User
-
 from app.core.security import (
     verify_password,
-    crate_access_token,
+    create_access_token,
+    create_refresh_token,
 )
 
 
-def login(db: Session, email: str, password: str):
-    user = (
-        db.query(User).filter(User.email == email).first()
-    )
-
-    if not user:
+def authenticate_user(db: Session, email: str, password: str) -> User | None:
+    user = db.query(User).filter(User.email == email).first()
+    if not user or not user.is_active:
         return None
     if not verify_password(password, user.password):
         return None
-    token = crate_access_token({"sub": str(user.email)})
+    return user
 
-    return token
+
+def issue_tokens(user: User) -> dict:
+    claims = {"sub": user.email, "role": user.role.value, "uid": user.id}
+    return {
+        "access_token": create_access_token(claims),
+        "refresh_token": create_refresh_token(claims),
+        "token_type": "bearer",
+    }
