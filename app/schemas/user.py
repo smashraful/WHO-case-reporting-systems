@@ -1,16 +1,26 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
+from typing import Optional
+
+from pydantic import BaseModel, EmailStr, ConfigDict
+
+from app.models.enums import UserRole
+
 
 class UserCreate(BaseModel):
     full_name: str
     email: EmailStr
     password: str
+    role: UserRole = UserRole.field_worker
+    location_id: Optional[int] = None
+
 
 class UserResponse(BaseModel):
     id: int
     full_name: str
     email: EmailStr
+    role: UserRole
+    is_active: bool
+    location_id: Optional[int] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
